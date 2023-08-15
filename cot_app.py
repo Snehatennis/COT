@@ -12,7 +12,7 @@ from dash import dash_table
 import sodapy
 
 client = sodapy.Socrata("publicreporting.cftc.gov", None)
-results = client.get("6dca-aqww", limit = 5000)
+results = client.get("6dca-aqww", limit = 600000, timeout=400)
 
 #offset = 0
 #while True:
@@ -48,6 +48,8 @@ df2 = df1[['market_and_exchange_names', 'report_date_as_yyyy_mm_dd', 'open_inter
           'pct_of_oi_comm_long_all', 'pct_of_oi_comm_short_all', 'nonrept_positions_long_all',
           'nonrept_positions_short_all', 'change_in_nonrept_long_all', 'change_in_nonrept_short_all',
           'pct_of_oi_nonrept_long_all', 'pct_of_oi_nonrept_short_all']]
+
+df2 = pd.DataFrame(df2)
 
 for col in  df2.columns[2:]:
     df2[col] = pd.to_numeric(df2[col], errors='coerce')
@@ -353,5 +355,5 @@ def update_table(n_clicks, selected_date, category, markets):
     return table_data
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, port = 4375)
     
