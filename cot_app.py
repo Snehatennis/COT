@@ -347,7 +347,9 @@ def update_table(n_clicks, selected_date, category, markets):
         table_data.append({'Market': market_str, 'Long Position': long_position_str, 'Short Position': short_position_str})
 
     return table_data
-
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
+
+#if __name__ == '__main__':
+#    app.run_server(debug=True)
     
