@@ -1,13 +1,18 @@
 import pandas as pd
 from sodapy import Socrata
 import dash
-import dash_html_components as html
+from dash import html
 import dash_core_components as dcc
 from dash.dependencies import Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 from pandas import Timedelta
 from dash import dash_table
+
+from flask import Flask
+from dash import Dash
+
+server = Flask(__name__)
 
 import sodapy
 
@@ -120,19 +125,6 @@ df['market_and_exchange_names'] = df['market_and_exchange_names'].replace({
     'EURO FX - CHICAGO MERCANTILE EXCHANGE' : 'EURO',
     'BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE' : 'BRAZILLIAN REAL'
 })
-
-from flask import Flask
-from dash import Dash
-
-server = Flask(__name__)
-
-import dash
-import dash_html_components as html
-import dash_core_components as dcc
-from dash.dependencies import Input, Output, State
-import plotly.graph_objects as go
-import pandas as pd
-
 
 # Create a dark theme provider
 theme = {
