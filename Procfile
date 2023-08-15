@@ -1,2 +1,2 @@
-web: gunicorn COT.py:app -m 100000000
+web: gunicorn COT.py:app -m 1024
 
