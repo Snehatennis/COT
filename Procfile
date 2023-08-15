@@ -1,3 +1,3 @@
-web: gunicorn COT_API_Workbook.ipynb:app
-web: gunicorn COT_API_Workbook.ipynb:app -m 100000
+web: gunicorn COT_API_Workbook:app
+web: gunicorn COT_API_Workbook:app -m 100000
 
