@@ -12,15 +12,15 @@ from dash import dash_table
 import sodapy
 
 client = sodapy.Socrata("publicreporting.cftc.gov", None)
+results = client.get("6dca-aqww", limit = 5000)
 
-offset = 0
-while True:
-    results = client.get("6dca-aqww", limit=10000, offset=offset)
+#offset = 0
+#while True:
+#    results = client.get("6dca-aqww", limit=10000, offset=offset)
+#    if len(results) == 0:
+#        break
 
-    if len(results) == 0:
-        break
-
-    offset += 10000
+#    offset += 10000
     
 #client = Socrata("publicreporting.cftc.gov", None)
 
