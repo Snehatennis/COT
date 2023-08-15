@@ -9,9 +9,22 @@ import numpy as np
 from pandas import Timedelta
 from dash import dash_table
 
-client = Socrata("publicreporting.cftc.gov", None)
+import sodapy
 
-results = client.get("6dca-aqww", limit = 1000000)
+client = sodapy.Socrata("publicreporting.cftc.gov", None)
+
+offset = 0
+while True:
+    results = client.get("6dca-aqww", limit=10000, offset=offset)
+
+    if len(results) == 0:
+        break
+
+    offset += 10000
+    
+#client = Socrata("publicreporting.cftc.gov", None)
+
+#results = client.get("6dca-aqww", limit = 1000000)
 
 df = pd.DataFrame.from_records(results)
 
