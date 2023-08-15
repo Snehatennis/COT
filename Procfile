@@ -1,2 +1,3 @@
-web: gunicorn cot_app:app
+web: python cot_app.py
+
 
