@@ -10,6 +10,7 @@ from pandas import Timedelta
 from dash import dash_table
 import dash_bootstrap_components as dbc
 from dash_bootstrap_templates import load_figure_template
+import dash_daq as daq
 
 from flask import Flask
 from dash import Dash
@@ -153,8 +154,7 @@ theme = {
 app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.CYBORG])
 load_figure_template('CYBORG')
 
-app.layout = daq.DarkThemeProvider(children=[
-    html.Div([
+app.layout = html.Div([
         html.H1('COT Dashboard', style={'color': theme['color']['text']}),
         dcc.Tabs(id="tabs", value='tab-1', children=[
             dcc.Tab(label='COT Individual', value='tab-1'),
