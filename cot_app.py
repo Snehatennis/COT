@@ -164,7 +164,6 @@ app.layout = html.Div([
         ]),
         html.Div(id='tabs-content'),
     ])
-])
 
 @app.callback(Output('tabs-content', 'children'),
               Input('tabs', 'value'))
