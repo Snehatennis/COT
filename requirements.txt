@@ -10,4 +10,4 @@ dash_core_components
 gunicorn
 flask
 dash_bootstrap_templates
-dash_bootstrap_component
+dash_bootstrap_components
