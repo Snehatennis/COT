@@ -8,6 +8,8 @@ import plotly.graph_objects as go
 import numpy as np
 from pandas import Timedelta
 from dash import dash_table
+import dash_bootstrap_components as dbc
+from dash_bootstrap_templates import load_figure_template
 
 from flask import Flask
 from dash import Dash
@@ -127,8 +129,18 @@ df['market_and_exchange_names'] = df['market_and_exchange_names'].replace({
     'BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE' : 'BRAZILLIAN REAL'
 })
 
+import dash
+import dash_html_components as html
+import dash_core_components as dcc
+import plotly.graph_objects as go
+import pandas as pd
+
+# Load the COT data
+#df = pd.read_csv('cot.csv')
+
 # Create a dark theme provider
 theme = {
+    'dark': True,
     'color': {
         'primary': '#000000',
         'secondary': '#ffffff',
@@ -138,21 +150,20 @@ theme = {
 }
 
 
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.CYBORG])
+load_figure_template('CYBORG')
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[
-        {'href': 'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css', 'rel': 'stylesheet'},
-        'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+app.layout = daq.DarkThemeProvider(children=[
+    html.Div([
+        html.H1('COT Dashboard', style={'color': theme['color']['text']}),
+        dcc.Tabs(id="tabs", value='tab-1', children=[
+            dcc.Tab(label='COT Individual', value='tab-1'),
+            dcc.Tab(label='Combined COT chart', value='tab-2'),
+            dcc.Tab(label='Market Data Table', value = 'tab-3'),
+            # Add more tabs for other graphs as needed
+        ]),
+        html.Div(id='tabs-content'),
     ])
-
-app.layout = html.Div([
-    html.H1('COT Dashboard', style={'color': theme['color']['primary']}),
-    dcc.Tabs(id="tabs", value='tab-1', children=[
-        dcc.Tab(label='COT Individual', value='tab-1'),
-        dcc.Tab(label='Combined COT chart', value='tab-2'),
-        dcc.Tab(label='Market Data Table', value = 'tab-3'),
-        # Add more tabs for other graphs as needed
-    ]),
-    html.Div(id='tabs-content'),
 ])
 
 @app.callback(Output('tabs-content', 'children'),
@@ -175,7 +186,7 @@ def render_content(tab):
                 className="btn btn-primary",
                 style={'color': theme['color']['primary']}
             ),
-            dcc.Graph(id='graph-1', style={'color': theme['color']['text']})
+            dcc.Graph(id='graph-1', style={'backgroundColor': '#000000', 'color': '#ffffff'})
         ])
     elif tab == 'tab-2':
         return html.Div([
@@ -188,11 +199,11 @@ def render_content(tab):
                 className="btn btn-primary",
                 style={'color': theme['color']['primary']}
             ),
-            dcc.Graph(id='graph-2', style={'color': theme['color']['text']})
+            dcc.Graph(id='graph-2', style={'backgroundColor': '#000000', 'color': '#ffffff'})
         ])
     elif tab == 'tab-3':
         return html.Div([
-            dcc.DatePickerSingle(id='date-picker', date=df['Date'].min(), style={'color': theme['color']['text']}),
+            dcc.DatePickerSingle(id='date-picker', date=df['Date'].m(), style={'color': theme['color']['text']}),
             dcc.Dropdown(id='category-dropdown', options=[
                 {'label': 'Non Commercial', 'value': 'Non Commercial'}, # 'style': {'color': theme['color']['text']}},
                 {'label': 'Commercial', 'value': 'Commercial'}, # 'style': {'color': theme['color']['text']}},
@@ -292,6 +303,7 @@ def update_graph_2(n_clicks, start_date, end_date, markets):
     )
 
     return fig
+
 @app.callback(
     Output('table-1', 'data'),
     [Input('filter-button', 'n_clicks')],
