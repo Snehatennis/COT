@@ -21,7 +21,7 @@ server = Flask(__name__)
 import sodapy
 
 client = sodapy.Socrata("publicreporting.cftc.gov", None)
-results = client.get("6dca-aqww", limit = 6000)
+results = client.get("6dca-aqww", limit = 10000)
 
 #offset = 0
 #while True:
@@ -136,92 +136,87 @@ import dash_core_components as dcc
 import plotly.graph_objects as go
 import pandas as pd
 
-# Load the COT data
-#df = pd.read_csv('cot.csv')
-
 # Create a dark theme provider
 theme = {
-    'dark': True,
     'color': {
         'primary': '#000000',
         'secondary': '#ffffff',
-        'text': '#333333',
-        'background': '#000000'
+        'text': '#ffffff',
+        'background': '#121212'
     }
 }
 
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[
+    {'href': 'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css', 'rel': 'stylesheet'},
+    'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
+])
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.CYBORG])
-load_figure_template('CYBORG')
+# Define custom CSS for dark mode
+app.css.append_css({
+    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
+})
 
-app.layout = html.Div([
-        html.H1('COT Dashboard', style={'color': theme['color']['text']}),
-        dcc.Tabs(id="tabs", value='tab-1', children=[
-            dcc.Tab(label='COT Individual', value='tab-1'),
-            dcc.Tab(label='Combined COT chart', value='tab-2'),
-            dcc.Tab(label='Market Data Table', value = 'tab-3'),
-            # Add more tabs for other graphs as needed
-        ]),
-        html.Div(id='tabs-content'),
-    ])
+# App layout
+app.layout = html.Div(style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}, children=[
+    html.H1('COT Dashboard', style={'color': theme['color']['primary']}),
+    dcc.Tabs(id="tabs", value='tab-1', children=[
+        dcc.Tab(label='COT Individual', value='tab-1', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}),
+        dcc.Tab(label='Combined COT chart', value='tab-2', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}),
+        dcc.Tab(label='Market Data Table', value='tab-3', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
+        # Add more tabs for other graphs as needed
+    ]),
+    html.Div(id='tabs-content')
+])
 
-@app.callback(Output('tabs-content', 'children'),
-              Input('tabs', 'value'))
+# Callback for the tabs content
+@app.callback(Output('tabs-content', 'children'), [Input('tabs', 'value')])
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            dcc.DatePickerRange(id='date-range-picker', start_date=df['Date'].min(), end_date=df['Date'].max(), style={'color': theme['color']['text']}),
+            dcc.DatePickerRange(id='date-range-picker', start_date=df['Date'].min(), end_date=df['Date'].max(),
+                                 style={'color': theme['color']['text'], 'background-color': theme['color']['background']}),
             dcc.Dropdown(id='category-dropdown', options=[
-                {'label': 'Non Commercial', 'value': 'Non Commercial'}, # 'style': {'color': theme['color']['text']}},
-                {'label': 'Commercial', 'value': 'Commercial'}, # 'style': {'color': theme['color']['text']}},
-                {'label': 'Non Reportable', 'value': 'Non Reportable'}, # 'style': {'color': theme['color']['text']}}
-            ], style={'color': theme['color']['text']}),
-            dcc.Dropdown(id='market-dropdown', 
-            options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
-            multi=True, style={'color': theme['color']['text']}),
-            html.Button(
-                "Go",
-                id="filter-button",
-                className="btn btn-primary",
-                style={'color': theme['color']['primary']}
-            ),
-            dcc.Graph(id='graph-1', style={'backgroundColor': '#000000', 'color': '#ffffff'})
+                {'label': 'Non Commercial', 'value': 'Non Commercial'},
+                {'label': 'Commercial', 'value': 'Commercial'},
+                {'label': 'Non Reportable', 'value': 'Non Reportable'}
+            ], style={'color': 'black', 'background-color': theme['color']['background']}),
+            dcc.Dropdown(id='market-dropdown',
+                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
+                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
+            html.Button("Go", id="filter-button", className="btn btn-primary",
+                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
+            dcc.Graph(id='graph-1', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
         ])
     elif tab == 'tab-2':
         return html.Div([
-            dcc.DatePickerRange(id='date-range-picker-2', start_date=df['Date'].min(), end_date=df['Date'].max(), style={'color': theme['color']['text']}),
-            dcc.Dropdown(id='market-dropdown-2', options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()]
-            , multi=True, style={'color': theme['color']['text']}),
-            html.Button(
-                "Go",
-                id="filter-button",
-                className="btn btn-primary",
-                style={'color': theme['color']['primary']}
-            ),
-            dcc.Graph(id='graph-2', style={'backgroundColor': '#000000', 'color': '#ffffff'})
+            dcc.DatePickerRange(id='date-range-picker-2', start_date=df['Date'].min(), end_date=df['Date'].max(),
+                                 style={'color': theme['color']['text'], 'background-color': theme['color']['background']}),
+            dcc.Dropdown(id='market-dropdown-2',
+                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
+                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
+            html.Button("Go", id="filter-button", className="btn btn-primary",
+                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
+            dcc.Graph(id='graph-2', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
         ])
     elif tab == 'tab-3':
         return html.Div([
-            dcc.DatePickerSingle(id='date-picker', date=df['Date'].m(), style={'color': theme['color']['text']}),
+            dcc.DatePickerSingle(id='date-picker', date=df['Date'].max(),
+                                 style={'color': theme['color']['text'], 'background-color': 'black'}),
             dcc.Dropdown(id='category-dropdown', options=[
-                {'label': 'Non Commercial', 'value': 'Non Commercial'}, # 'style': {'color': theme['color']['text']}},
-                {'label': 'Commercial', 'value': 'Commercial'}, # 'style': {'color': theme['color']['text']}},
-                {'label': 'Non Reportable', 'value': 'Non Reportable'},# 'style': {'color': theme['color']['text']}}
-            ], style={'color': theme['color']['text']}),
-            dcc.Dropdown(id='market-dropdown', 
-            options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
-            multi=True, style={'color': theme['color']['text']}),
-            html.Button(
-                "Go",
-                id="filter-button",
-                className="btn btn-primary",
-                style={'color': theme['color']['primary']}
-            ),
+                {'label': 'Non Commercial', 'value': 'Non Commercial'},
+                {'label': 'Commercial', 'value': 'Commercial'},
+                {'label': 'Non Reportable', 'value': 'Non Reportable'}
+            ], style={'color': 'black', 'background-color': theme['color']['background']}),
+            dcc.Dropdown(id='market-dropdown',
+                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
+                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
+            html.Button("Go", id="filter-button", className="btn btn-primary",
+                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
             dash_table.DataTable(id='table-1', columns=[
                 {'name': 'Market', 'id': 'Market'},
                 {'name': 'Long Position', 'id': 'Long Position'},
                 {'name': 'Short Position', 'id': 'Short Position'}
-            ])
+            ], style_table={'backgroundColor': theme['color']['background'], 'color': 'black'})
         ])
 
     # Add more tabs for other graphs as needed
@@ -259,7 +254,9 @@ def update_graph_1(n_clicks, start_date, end_date, category, markets):
         xaxis=dict(title='Date'),
         barmode='group',  # Use 'group' to place the bars side by side
         bargap=0.1,  # Adjust this value to reduce the space between bars
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        plot_bgcolor=theme['color']['background'],
+        paper_bgcolor=theme['color']['background']
     )
 
     return fig
@@ -298,11 +295,12 @@ def update_graph_2(n_clicks, start_date, end_date, markets):
         xaxis=dict(title='Date'),
         barmode='group',  # Use 'group' to place the bars side by side
         bargap=0.1,  # Adjust this value to reduce the space between bars
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
+        plot_bgcolor=theme['color']['background'],
+        paper_bgcolor=theme['color']['background']
     )
 
     return fig
-
 @app.callback(
     Output('table-1', 'data'),
     [Input('filter-button', 'n_clicks')],
@@ -359,6 +357,8 @@ def update_table(n_clicks, selected_date, category, markets):
         table_data.append({'Market': market_str, 'Long Position': long_position_str, 'Short Position': short_position_str})
 
     return table_data
+
+
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
 
