@@ -12,3 +12,5 @@ flask
 dash_bootstrap_templates
 dash_bootstrap_components
 dash_daq
+json
+requests
