@@ -21,7 +21,7 @@ server = Flask(__name__)
 import sodapy
 
 client = sodapy.Socrata("publicreporting.cftc.gov", None)
-results = client.get("6dca-aqww", limit = 10000)
+results = client.get("6dca-aqww", limit = 20000)
 
 #offset = 0
 #while True:
@@ -590,6 +590,4 @@ def update_table_4(n_clicks, country):
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
 
-#if __name__ == '__main__':
-#    app.run_server(debug=True)
     
