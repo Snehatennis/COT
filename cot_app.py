@@ -130,93 +130,286 @@ df['market_and_exchange_names'] = df['market_and_exchange_names'].replace({
     'BRAZILIAN REAL - CHICAGO MERCANTILE EXCHANGE' : 'BRAZILLIAN REAL'
 })
 
+#Central Bank Rates
+import requests
+
+api_url = 'https://api.api-ninjas.com/v1/interestrate'
+response = requests.get(api_url, headers={'X-Api-Key': 'WxqvE2/mfm9rPx67/g0MIQ==GUnyWlARArflJMjn'}).json()
+data=pd.DataFrame(response['central_bank_rates'])
+
+#Inflation Rates
+import requests
+import pandas as pd
+
+# List of countries
+countries = ['United States', 'Australia', 'Chile', 'South Korea', 'Brazil',
+       'Great Britain', 'Canada', 'China', 'Czech Republic', 'Denmark',
+       'Europe', 'Hungary', 'India', 'Indonesia', 'Israel', 'Mexico',
+       'New Zealand', 'Norway', 'Poland', 'Russia', 'Saudi Arabia',
+       'South Africa', 'Sweden', 'Switzerland', 'Turkey']
+
+# Initialize an empty list to store data for each country
+data_list = []
+
+# Loop through the list of countries and make API requests
+for country in countries:
+    api_url = 'https://api.api-ninjas.com/v1/inflation?country={}'.format(country)
+    response = requests.get(api_url, headers={'X-Api-Key': 'WxqvE2/mfm9rPx67/g0MIQ==GUnyWlARArflJMjn'})
+    
+    if response.status_code == 200:
+        # Convert the JSON response to a Python dictionary
+        data_dict = response.json()
+        
+        # Append the data for the current country to the data_list
+        data_list.extend(data_dict)
+    else:
+        print("API request for", country, "failed with status code:", response.status_code)
+
+# Create a DataFrame from the combined data
+inflation_df = pd.DataFrame(data_list)
+
+# Print the DataFrame
+print(inflation_df)
+
+#GDP data:
+import requests
+import pandas as pd
+
+# List of countries
+countries = ['United States', 'Australia', 'Chile', 'South Korea', 'Brazil',
+             'Great Britain', 'Canada', 'China', 'Czech Republic', 'Denmark',
+             'Europe', 'Hungary', 'India', 'Indonesia', 'Israel', 'Mexico',
+             'New Zealand', 'Norway', 'Poland', 'Russia', 'Saudi Arabia',
+             'South Africa', 'Sweden', 'Switzerland', 'Turkey']
+
+# Initialize an empty list to store data frames
+data_frames = []
+
+# API key
+api_key = 'WxqvE2/mfm9rPx67/g0MIQ==GUnyWlARArflJMjn'
+
+# Loop through the list of countries and make API requests
+for country in countries:
+    api_url = f'https://api.api-ninjas.com/v1/country?name={country}'
+    response = requests.get(api_url, headers={'X-Api-Key': api_key})
+    
+    if response.status_code == requests.codes.ok:
+        data_dict = response.json()
+        
+        data_frame = pd.DataFrame(data_dict)
+        data_frames.append(data_frame)
+    
+    else:
+        print("API request for", country, "failed with status code:", response.status_code)
+
+# Create a DataFrame from the combined data
+country_df = pd.concat(data_frames)
+
+# Print the DataFrame
+#print(country_df)
+
+country_df = country_df[['name', 'gdp', 'unemployment']]
+country_df.rename(columns={'name': 'country'}, inplace=True)
+
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
+import dash_table
 import plotly.graph_objects as go
 import pandas as pd
+from dash.dependencies import Input, Output, State
+#from pandas.tseries.offsets import Timedelta
+import numpy as np
+import json
 
 # Create a dark theme provider
 theme = {
     'color': {
         'primary': '#000000',
         'secondary': '#ffffff',
-        'text': '#ffffff',
-        'background': '#121212'
+        'text': '#333333',
+        'background': '#000000'
     }
 }
 
-app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[
-    {'href': 'https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css', 'rel': 'stylesheet'},
-    'https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap'
-])
+# Create the app
+app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.LUX])
 
-# Define custom CSS for dark mode
-app.css.append_css({
-    'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
-})
+# Sidebar style
+SIDEBAR_STYLE = {
+    "position": "fixed",
+    "top": 50,
+    "left": 0,
+    "bottom": 0,
+    "width": "0.5rem",
+    "padding": "2rem 1rem",
+    "background-color": "#f8f9fa",
+}
 
-# App layout
-app.layout = html.Div(style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}, children=[
+sidebar = html.Div(
+    [
+#        html.H2("Market Indicators", style={'font-size': '16px'}),  # Adjust font-size here
+        html.Hr(),
+        dcc.Tabs(
+            id="tabs",
+            value="tab-1",
+            children=[
+                dcc.Tab(label="COT Individual", value="tab-1", style={'font-size': '10px'}),  # Adjust font-size here
+                dcc.Tab(label="Combined COT chart", value="tab-2", style={'font-size': '10px'}),  # Adjust font-size here
+                dcc.Tab(label="Market Data Table", value="tab-3", style={'font-size': '10px'}),  # Adjust font-size here
+                dcc.Tab(label="Central Bank Rates", value='tab-4',style={'font-size': '10px'}),
+                dcc.Tab(label="Inflation Rates", value='tab-5', style={'font-size': '10px'}),
+                dcc.Tab(label="GDP data", value='tab-6', style={'font-size': '10px'})
+            ],
+            vertical=True,
+        ),
+    ],
+    style=SIDEBAR_STYLE,
+)
+
+app.layout = dbc.Container([
     html.H1('COT Dashboard', style={'color': theme['color']['primary']}),
-    dcc.Tabs(id="tabs", value='tab-1', children=[
-        dcc.Tab(label='COT Individual', value='tab-1', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}),
-        dcc.Tab(label='Combined COT chart', value='tab-2', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']}),
-        dcc.Tab(label='Market Data Table', value='tab-3', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
-        # Add more tabs for other graphs as needed
-    ]),
-    html.Div(id='tabs-content')
-])
+    dbc.Row([
+        dbc.Col(sidebar, width=2, style={'padding-right': '0'}),
+        dbc.Col(id='tabs-content', width=10),
+    ],
+    style={'margin-left': '0.2cm', 'margin-right': '0.2cm'}),  # Add margin to both sides
+],
+fluid=True)  # Set fluid to True to make the container fill the entire width of the viewport
 
-# Callback for the tabs content
-@app.callback(Output('tabs-content', 'children'), [Input('tabs', 'value')])
+# Add some additional styling to the tabs content
+app.clientside_callback(
+    """
+    function resizeContent() {
+        var sidebarWidth = document.querySelector('#sidebar').clientWidth;
+        var content = document.querySelector('#tabs-content');
+        content.style.marginLeft = sidebarWidth + 'px';
+    }
+    resizeContent();
+    window.addEventListener('resize', resizeContent);
+    """,
+    Output('tabs-content', 'style'),
+    Input('tabs', 'value'),
+)
+
+
+
+@app.callback(
+    Output('tabs-content', 'children'),
+    Input('tabs', 'value')
+)
+
 def render_content(tab):
     if tab == 'tab-1':
         return html.Div([
-            dcc.DatePickerRange(id='date-range-picker', start_date=df['Date'].min(), end_date=df['Date'].max(),
-                                 style={'color': theme['color']['text'], 'background-color': theme['color']['background']}),
+            dcc.DatePickerRange(id='date-range-picker', start_date=df['Date'].min(), end_date=df['Date'].max(), style={'color': theme['color']['text']}),
             dcc.Dropdown(id='category-dropdown', options=[
-                {'label': 'Non Commercial', 'value': 'Non Commercial'},
-                {'label': 'Commercial', 'value': 'Commercial'},
-                {'label': 'Non Reportable', 'value': 'Non Reportable'}
-            ], style={'color': 'black', 'background-color': theme['color']['background']}),
-            dcc.Dropdown(id='market-dropdown',
-                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
-                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
-            html.Button("Go", id="filter-button", className="btn btn-primary",
-                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
-            dcc.Graph(id='graph-1', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
+                {'label': 'Non Commercial', 'value': 'Non Commercial'}, # 'style': {'color': theme['color']['text']}},
+                {'label': 'Commercial', 'value': 'Commercial'}, # 'style': {'color': theme['color']['text']}},
+                {'label': 'Non Reportable', 'value': 'Non Reportable'}, # 'style': {'color': theme['color']['text']}}
+            ], style={'color': theme['color']['text']}),
+            dcc.Dropdown(id='market-dropdown', 
+            options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
+            multi=True, style={'color': theme['color']['text']}),
+            html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
+            dcc.Graph(id='graph-1', style={'color': theme['color']['text']})
         ])
     elif tab == 'tab-2':
         return html.Div([
-            dcc.DatePickerRange(id='date-range-picker-2', start_date=df['Date'].min(), end_date=df['Date'].max(),
-                                 style={'color': theme['color']['text'], 'background-color': theme['color']['background']}),
-            dcc.Dropdown(id='market-dropdown-2',
-                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
-                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
-            html.Button("Go", id="filter-button", className="btn btn-primary",
-                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
-            dcc.Graph(id='graph-2', style={'backgroundColor': theme['color']['background'], 'color': theme['color']['text']})
+            dcc.DatePickerRange(id='date-range-picker-2', start_date=df['Date'].min(), end_date=df['Date'].max(), style={'color': theme['color']['text']}),
+            dcc.Dropdown(id='market-dropdown-2', options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()]
+            , multi=True, style={'color': theme['color']['text']}),
+            html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
+            dcc.Graph(id='graph-2', style={'color': theme['color']['text']})
         ])
     elif tab == 'tab-3':
         return html.Div([
-            dcc.DatePickerSingle(id='date-picker', date=df['Date'].max(),
-                                 style={'color': theme['color']['text'], 'background-color': 'black'}),
+            dcc.DatePickerSingle(id='date-picker', date=df['Date'].max(), style={'color': theme['color']['text']}),
             dcc.Dropdown(id='category-dropdown', options=[
-                {'label': 'Non Commercial', 'value': 'Non Commercial'},
-                {'label': 'Commercial', 'value': 'Commercial'},
-                {'label': 'Non Reportable', 'value': 'Non Reportable'}
-            ], style={'color': 'black', 'background-color': theme['color']['background']}),
-            dcc.Dropdown(id='market-dropdown',
-                         options=[{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
-                         multi=True, style={'color': 'black', 'background-color': theme['color']['background']}),
-            html.Button("Go", id="filter-button", className="btn btn-primary",
-                        style={'backgroundColor': theme['color']['primary'], 'color': theme['color']['secondary']}),
+                {'label': 'Non Commercial', 'value': 'Non Commercial'}, # 'style': {'color': theme['color']['text']}},
+                {'label': 'Commercial', 'value': 'Commercial'}, # 'style': {'color': theme['color']['text']}},
+                {'label': 'Non Reportable', 'value': 'Non Reportable'},# 'style': {'color': theme['color']['text']}}
+            ], style={'color': theme['color']['text']}),
+            dcc.Dropdown(id='market-dropdown', 
+            options = [{'label': market, 'value': market} for market in df['market_and_exchange_names'].unique()],
+            multi=True, style={'color': theme['color']['text']}),
+            html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
             dash_table.DataTable(id='table-1', columns=[
                 {'name': 'Market', 'id': 'Market'},
                 {'name': 'Long Position', 'id': 'Long Position'},
                 {'name': 'Short Position', 'id': 'Short Position'}
-            ], style_table={'backgroundColor': theme['color']['background'], 'color': 'black'})
+            ])
+        ])
+    elif tab == 'tab-4':
+        return html.Div([
+            dcc.Dropdown(id = 'country-dropdown', 
+                         options = [{'label': country, 'value': country} for country in data['country'].unique()],
+            multi=True, style={'color': theme['color']['text']}),
+             html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
+            dash_table.DataTable(id='table-2', columns=[
+                {'name': 'Country', 'id': 'country'},
+                {'name': 'Rate', 'id': 'rate_pct'},
+                {'name': 'Date', 'id': 'last_updated'}],
+                data=json.loads(data.to_json(orient='records', date_format='iso')))
+            
+        ])
+    elif tab == 'tab-5':
+        return html.Div([
+            dcc.Dropdown(id = 'country-dropdown', 
+                         options = [{'label': country, 'value': country} for country in inflation_df['country'].unique()],
+            multi=True, style={'color': theme['color']['text']}),
+             html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
+            dash_table.DataTable(id='table-3', columns=[
+                {'name': 'Country', 'id': 'country'},
+                {'name': 'Type', 'id': 'type'},
+                {'name': 'Month', 'id': 'period'},
+                {'name': 'Monthly Rate', 'id': 'monthly_rate_pct'},
+                {'name': 'Yearly Rate', 'id': 'yearly_rate_pct'}],
+                data=json.loads(data.to_json(orient='records', date_format='iso')))
+            
+        ])
+    elif tab == 'tab-6':
+        return html.Div([
+            dcc.Dropdown(id = 'country-dropdown', 
+                         options = [{'label': country, 'value': country} for country in data['country'].unique()],
+            multi=True, style={'color': theme['color']['text']}),
+             html.Button(
+                "Go",
+                id="filter-button",
+                className="btn btn-primary",
+                style={'background-color': 'green', 'color': theme['color']['secondary']}
+            ),
+            dash_table.DataTable(id='table-4', columns=[
+                {'name': 'Country', 'id': 'country'},
+                {'name': 'GDP', 'id': 'gdp'},
+                {'name': 'Unemployment', 'id': 'unemployment'}],
+                data=json.loads(data.to_json(orient='records', date_format='iso')))
+            
         ])
 
     # Add more tabs for other graphs as needed
@@ -254,9 +447,7 @@ def update_graph_1(n_clicks, start_date, end_date, category, markets):
         xaxis=dict(title='Date'),
         barmode='group',  # Use 'group' to place the bars side by side
         bargap=0.1,  # Adjust this value to reduce the space between bars
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-        plot_bgcolor=theme['color']['background'],
-        paper_bgcolor=theme['color']['background']
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
     )
 
     return fig
@@ -295,9 +486,7 @@ def update_graph_2(n_clicks, start_date, end_date, markets):
         xaxis=dict(title='Date'),
         barmode='group',  # Use 'group' to place the bars side by side
         bargap=0.1,  # Adjust this value to reduce the space between bars
-        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01),
-        plot_bgcolor=theme['color']['background'],
-        paper_bgcolor=theme['color']['background']
+        legend=dict(yanchor="top", y=0.99, xanchor="left", x=0.01)
     )
 
     return fig
@@ -333,14 +522,14 @@ def update_table(n_clicks, selected_date, category, markets):
         else:
             # Get the long and short position values based on the selected category
             if category == 'Non Commercial':
-                long_position = market_data['Non Commercial Long %'].values[0]
-                short_position = market_data['Non Commercial Short %'].values[0]
+                long_position = round((float(market_data['Non Commercial Long %'].values[0])*100),2)
+                short_position = round((float(market_data['Non Commercial Short %'].values[0])*100),2)
             elif category == 'Commercial':
-                long_position = market_data['Commercial Long %'].values[0]
-                short_position = market_data['Commercial Short %'].values[0]
+                long_position = round((float(market_data['Commercial Long %'].values[0])*100),2)
+                short_position = round((float(market_data['Commercial Short %'].values[0])*100),2)
             elif category == 'Non Reportable':
-                long_position = market_data['Non Reportable Long %'].values[0]
-                short_position = market_data['Non Reportable Short %'].values[0]
+                long_position = round((float(market_data['Non Reportable Long %'].values[0])*100),2)
+                short_position = round((float(market_data['Non Reportable Short %'].values[0])*100),2)
             else:
                 # Handle the case when no category is selected
                 long_position = 0
@@ -357,6 +546,45 @@ def update_table(n_clicks, selected_date, category, markets):
         table_data.append({'Market': market_str, 'Long Position': long_position_str, 'Short Position': short_position_str})
 
     return table_data
+
+@app.callback(
+    Output('table-2', 'data'),
+    [Input('filter-button', 'n_clicks')],
+    [State('country-dropdown', 'value')]
+)
+def update_table_2(n_clicks, country):
+    if n_clicks is None or not country:
+        return []  # Return an empty data set when no country is selected or on initial load
+    
+    filtered_data = data[data['country'].isin(country)].to_dict('records')
+
+    return filtered_data
+
+@app.callback(
+    Output('table-3', 'data'),
+    [Input('filter-button', 'n_clicks')],
+    [State('country-dropdown', 'value')]
+)
+def update_table_3(n_clicks, country):
+    if n_clicks is None or not country:
+        return []  # Return an empty data set when no country is selected or on initial load
+    
+    filtered_data1 = inflation_df[inflation_df['country'].isin(country)].to_dict('records')
+
+    return filtered_data1
+
+@app.callback(
+    Output('table-4', 'data'),
+    [Input('filter-button', 'n_clicks')],
+    [State('country-dropdown', 'value')]
+)
+def update_table_4(n_clicks, country):
+    if n_clicks is None or not country:
+        return []  # Return an empty data set when no country is selected or on initial load
+    
+    filtered_data2 = country_df[country_df['country'].isin(country)].to_dict('records')
+
+    return filtered_data2
 
 
 if __name__ == '__main__':
