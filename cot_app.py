@@ -21,7 +21,7 @@ server = Flask(__name__)
 import sodapy
 
 client = sodapy.Socrata("publicreporting.cftc.gov", None)
-results = client.get("6dca-aqww", limit = 20000)
+results = client.get("6dca-aqww", limit = 10000)
 
 #offset = 0
 #while True:
