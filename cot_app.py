@@ -282,17 +282,6 @@ sidebar = html.Div(
     ],
     style=SIDEBAR_STYLE,
 )
-
-app.layout = dbc.Container([
-    html.H1('COT Dashboard', style={'color': theme['color']['primary']}),
-    dbc.Row([
-        dbc.Col(sidebar, width=2, style={'padding-right': '0'}),
-        dbc.Col(id='tabs-content', width=10),
-    ],
-    style={'margin-left': '0.2cm', 'margin-right': '0.2cm'}),  # Add margin to both sides
-],
-fluid=True)  # Set fluid to True to make the container fill the entire width of the viewport
-
 # Modify the update_theme function to handle theme switching
 def update_theme(selected_theme):
     if selected_theme == 'dark':
@@ -311,6 +300,17 @@ def update_theme(selected_theme):
     }
 
     return chosen_theme, tabs_content_style, tabs_style
+
+app.layout = dbc.Container([
+    html.H1('COT Dashboard', style={'color': theme['color']['primary']}),
+    dbc.Row([
+        dbc.Col(sidebar, width=2, style={'padding-right': '0'}),
+        dbc.Col(id='tabs-content', width=10),
+    ],
+    style={'margin-left': '0.2cm', 'margin-right': '0.2cm'}),  # Add margin to both sides
+],
+fluid=True)  # Set fluid to True to make the container fill the entire width of the viewport
+
 
 # Update the clientside_callback to use the updated theme-switcher
 
