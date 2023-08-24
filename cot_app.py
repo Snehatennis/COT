@@ -586,12 +586,9 @@ def update_table_4(n_clicks, country):
 
     return filtered_data2
 
-from dash.server import run_server
 
-server = run_server(app)
-callable_app = server
 
-#if __name__ == '__main__':
-#    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
+if __name__ == '__main__':
+    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
 
     
