@@ -169,7 +169,7 @@ for country in countries:
 inflation_df = pd.DataFrame(data_list)
 
 # Print the DataFrame
-print(inflation_df)
+#print(inflation_df)
 
 #GDP data:
 import requests
@@ -222,18 +222,33 @@ from dash.dependencies import Input, Output, State
 import numpy as np
 import json
 
-# Create a dark theme provider
-theme = {
+# Create light and dark themes
+light_theme = {
     'color': {
         'primary': '#000000',
         'secondary': '#ffffff',
         'text': '#333333',
-        'background': '#000000'
+        'background': '#ffffff'
+    }
+}
+
+dark_theme = {
+    'color': {
+        'primary': '#ffffff',
+        'secondary': '#000000',
+        'text': '#ffffff',
+        'background': '#121212'
     }
 }
 
 # Create the app
 app = dash.Dash(__name__, suppress_callback_exceptions=True, external_stylesheets=[dbc.themes.LUX])
+
+theme_switcher = dbc.Switch(
+    id='theme-switcher',
+    label='Dark Mode',
+    style={'margin-bottom': '10px'}
+)
 
 # Sidebar style
 SIDEBAR_STYLE = {
@@ -250,6 +265,7 @@ sidebar = html.Div(
     [
 #        html.H2("Market Indicators", style={'font-size': '16px'}),  # Adjust font-size here
         html.Hr(),
+        theme_switcher,
         dcc.Tabs(
             id="tabs",
             value="tab-1",
@@ -277,27 +293,63 @@ app.layout = dbc.Container([
 ],
 fluid=True)  # Set fluid to True to make the container fill the entire width of the viewport
 
-# Add some additional styling to the tabs content
+# Modify the update_theme function to handle theme switching
+def update_theme(selected_theme):
+    if selected_theme == 'dark':
+        chosen_theme = dark_theme
+    else:
+        chosen_theme = light_theme
+
+    tabs_content_style = {
+        'marginLeft': '0.5rem',  # Adjust for sidebar width
+        'color': chosen_theme['color']['text'],
+        'backgroundColor': chosen_theme['color']['background']
+    }
+
+    tabs_style = {
+        'backgroundColor': chosen_theme['color']['primary']
+    }
+
+    return chosen_theme, tabs_content_style, tabs_style
+
+# Update the clientside_callback to use the updated theme-switcher
+
+# Update the clientside_callback to use the updated theme-switcher
 app.clientside_callback(
     """
-    function resizeContent() {
-        var sidebarWidth = document.querySelector('#sidebar').clientWidth;
-        var content = document.querySelector('#tabs-content');
-        content.style.marginLeft = sidebarWidth + 'px';
+    function updateTheme(switchValue) {
+        const theme = switchValue ? 'dark' : 'light'
+        const chosen_theme = theme === 'dark' ? dark_theme : light_theme;
+
+    const content = document.querySelector('#tabs-content');
+    const tabs = document.querySelector('#tabs');
+    content.style.color = chosen_theme['color']['text'];
+    content.style.backgroundColor = chosen_theme['color']['background'];
+    tabs.style.backgroundColor = chosen_theme['color']['primary'];
+
+        if (switchValue) {
+            content.style.color = dark_theme['color']['text'];
+            content.style.backgroundColor = dark_theme['color']['background'];
+            tabs.style.backgroundColor = dark_theme['color']['primary'];
+        } else {
+            content.style.color = light_theme['color']['text'];
+            content.style.backgroundColor = light_theme['color']['background'];
+            tabs.style.backgroundColor = light_theme['color']['primary'];
+        }
     }
-    resizeContent();
-    window.addEventListener('resize', resizeContent);
     """,
     Output('tabs-content', 'style'),
-    Input('tabs', 'value'),
+    Output('tabs', 'style'),
+    Input('theme-switcher', 'on')
 )
-
-
+        
 
 @app.callback(
     Output('tabs-content', 'children'),
     Input('tabs', 'value')
+#    Input('theme-switcher', 'value')
 )
+
 
 def render_content(tab):
     if tab == 'tab-1':
@@ -585,9 +637,6 @@ def update_table_4(n_clicks, country):
     filtered_data2 = country_df[country_df['country'].isin(country)].to_dict('records')
 
     return filtered_data2
-
-
-
 if __name__ == '__main__':
     app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 4545)))
 
